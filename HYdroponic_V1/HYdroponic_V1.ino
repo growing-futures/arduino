@@ -1,3 +1,21 @@
+#define ambLS 400
+#define numLights 4
+
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+// Set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+int millisUpdate = millis();
+/*
+float waterTemp = 22.3;//Change this variables or make your or make your own ones
+float airHumidity = 12.3;
+float airTemp = 45.2;
+float ph= 7.00;
+float waterlevel = 10.3;
+float light = 189;
+*/
+
 // ---------------------------------------------------------------------------
 // Example NewPing library sketch that does a ping about 20 times per second.
 // ---------------------------------------------------------------------------
@@ -6,7 +24,7 @@
 
 #define TRIGGER_PIN  12  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     11  // Arduino pin tied to echo pin on the ultrasonic sensor.
-#define MAX_DISTANCE 200 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+#define MAX_DISTANCE 350 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
@@ -46,71 +64,13 @@ DHT dht(DHTPIN, DHTTYPE);
 #include <DallasTemperature.h>
 
 // Data wire is conntec to the Arduino digital pin 2
-#define ONE_WIRE_BUS 2
+#define ONE_WIRE_BUS 7
 
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(ONE_WIRE_BUS);
 
 // Pass our oneWire reference to Dallas Temperature sensor 
 DallasTemperature sensors(&oneWire);
-
-
-/*********************************************************************
-This is an example for our Monochrome OLEDs based on SSD1306 drivers
-
-  Pick one up today in the adafruit shop!
-  ------> http://www.adafruit.com/category/63_98
-
-This example is for a 128x64 size display using I2C to communicate
-3 pins are required to interface (2 I2C and one reset)
-
-Adafruit invests time and resources providing this open source code, 
-please support Adafruit and open-source hardware by purchasing 
-products from Adafruit!
-
-Written by Limor Fried/Ladyada  for Adafruit Industries.  
-BSD license, check license.txt for more information
-All text above, and the splash screen must be included in any redistribution
-*********************************************************************/
-
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-
-#define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
-
-#define NUMFLAKES 10
-#define XPOS 0
-#define YPOS 1
-#define DELTAY 2
-
-
-#define LOGO16_GLCD_HEIGHT 16 
-#define LOGO16_GLCD_WIDTH  16 
-static const unsigned char PROGMEM logo16_glcd_bmp[] =
-{ B00000000, B11000000,
-  B00000001, B11000000,
-  B00000001, B11000000,
-  B00000011, B11100000,
-  B11110011, B11100000,
-  B11111110, B11111000,
-  B01111110, B11111111,
-  B00110011, B10011111,
-  B00011111, B11111100,
-  B00001101, B01110000,
-  B00011011, B10100000,
-  B00111111, B11100000,
-  B00111111, B11110000,
-  B01111100, B11110000,
-  B01110000, B01110000,
-  B00000000, B00110000 };
-
-#if (SSD1306_LCDHEIGHT != 64)
-#error("Height incorrect, please fix Adafruit_SSD1306.h!");
-#endif
-
 
 
 /*
@@ -132,50 +92,110 @@ int pHArrayIndex=0;
 
 
 
+//variables for all the data
+#define numData 9
+#define dataPerScreen 2
+uint8_t screenCount = 0;
+String dataPrefix[numData] = {"wT", "aH", "aT", "pH", "wL", "LS1", "LS2", "LS3", "LS4"};
+String data[numData];
+  float wT;
+  float aH;
+  float aT;
+  float pH;
+  unsigned long wL;
+  String l1S;
+  String l2S;
+  String l3S;
+  String l4S;
+
+
+unsigned long sendDataInterval = 2000;
+unsigned long screenChangeInterval = 3000;
+unsigned long lastSendDataMillis;
+unsigned long lastScreenChangeMillis;
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   dht.begin();
   sensors.begin();
+
+  lcd.begin();
+
+  lastScreenChangeMillis = millis();
+  lastSendDataMillis = lastScreenChangeMillis;
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   //every 2s, send new values.
 
-  delay(2000);
+  if((millis() - lastSendDataMillis) > sendDataInterval){
 
-  String dataOutput = "";
-  dataOutput += getWaterLevelCm();
-  dataOutput += ",";
-  dataOutput += getDHThumid();
-  dataOutput += ",";
-  dataOutput += getDHTTempC();
-  dataOutput += ",";
-  dataOutput += getWaterTempC();
-  dataOutput += ",";
-  dataOutput += getLightStatus();
-  dataOutput += ",";
-  dataOutput += getPHValue();
+    wT = getWaterTempC();//Change this variables or make your or make your own ones
+    aH = getAirhumid();
+    aT = getAirTempC();
+    pH= getPHValue();
+    wL = getWaterLevelCm();
+    l1S = getLight1Status();
+    l2S = getLight2Status();
+    l3S = getLight3Status();
+    l4S = getLight4Status();
 
-  Serial.println(dataOutput);
+    data[0] = (String)wT;
+    data[1] = (String)aH;
+    data[2] = (String)aT;
+    data[3] = (String)pH;
+    data[4] = (String)wL;
+    data[5] = (String)l1S;
+    data[6] = (String)l2S;
+    data[7] = (String)l3S;
+    data[8] = (String)l4S;
+
+    String dataOutput = "";
+    dataOutput += wL;
+    dataOutput += ",";
+    dataOutput += aH;
+    dataOutput += ",";
+    dataOutput += aT;
+    dataOutput += ",";
+    dataOutput += wT;
+    dataOutput += ",";
+    dataOutput += pH;
+    dataOutput += ",";
+    dataOutput += l1S;
+    dataOutput += ",";
+    dataOutput += l2S;
+    dataOutput += ",";
+    dataOutput += l3S;
+    dataOutput += ",";
+    dataOutput += l4S;
+
+    Serial.println(dataOutput);
+
+    lastSendDataMillis = millis();
+  }
+  if((millis() - lastScreenChangeMillis) > screenChangeInterval){
+    //change the screen
+    screenCount ++;
+    if(((screenCount) * dataPerScreen) > numData){
+      screenCount = 0; //reset the screen
+    }
+    showLCDData();
+    lastScreenChangeMillis = millis();
+  }
 
 }
 
-float getWaterLevelCm(){
-  delay(500); // Wait 50ms between pings (about 20 pings/sec). 29ms should be the shortest delay between pings.
-  //Serial.print("Ping: ");
-  //Serial.print(sonar.ping_cm()); // Send ping, get distance in cm and print result (0 = outside set distance range)
-  //Serial.println("cm");
-  return (sonar.ping_cm());
+unsigned long getWaterLevelCm(){
+  return(sonar.ping_cm());
 }
 
-float getDHThumid(){
+float getAirhumid(){
   return(dht.readHumidity());
 }
 
-float getDHTTempC(){
+float getAirTempC(){
   return(dht.readTemperature());
 }
 
@@ -184,9 +204,20 @@ float getWaterTempC(){
   return(sensors.getTempCByIndex(0));
 }
 
-bool getLightStatus(){
-  int ambLightValue = 400;
-  return(analogRead(A1) > ambLightValue);
+String getLight1Status(){
+  return((String)(analogRead(A1) > ambLS));//400 being ambient light
+}
+String getLight2Status(){
+  if(numLights == 1) return "X";
+  return((String)(analogRead(A2) > ambLS));//400 being ambient light
+}
+String getLight3Status(){
+  if(numLights == 1) return "X";
+  return((String)(analogRead(A3) > ambLS));//400 being ambient light
+}
+String getLight4Status(){
+  if(numLights == 1) return "X";
+  return((String)(analogRead(A4) > ambLS));//400 being ambient light
 }
 
 float getPHValue(){
@@ -199,18 +230,6 @@ float getPHValue(){
       delay(20);
     }
     return(pHValue);
-}
-
-void displayDataOLED(){
-  
-  /*
-  getWaterLevelCm();
-  getDHThumid();
-  getDHTTempC();
-  getWaterTempC();
-  */
-
-  
 }
 
 double avergearray(int* arr, int number){
@@ -251,4 +270,26 @@ double avergearray(int* arr, int number){
     avg = (double)amount/(number-2);
   }//if
   return avg;
+}
+
+void showLCDData(){
+  
+  lcd.clear();
+  /*
+  delay(200);
+  lcd.setCursor(0,0);
+  lcd.print(screenCount);
+  */
+  
+  for(int i = 0; i < dataPerScreen; i++){
+    if((i+ (dataPerScreen * screenCount)) <= numData-1){
+      lcd.setCursor(0,i);
+      lcd.print(dataPrefix[i + (dataPerScreen * screenCount)]);
+      lcd.print(": ");
+      lcd.print(data[i + (dataPerScreen * screenCount)]);
+    }
+  }
+  
+  //lcd.setCursor(14,0);
+  //lcd.print(screenCount);
 }
