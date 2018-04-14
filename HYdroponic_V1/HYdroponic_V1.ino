@@ -122,7 +122,7 @@ static const unsigned char PROGMEM logo16_glcd_bmp[] =
 */
 
 #define SensorPin A0            //pH meter Analog output to Arduino Analog Input 0
-#define Offset 0.55            //deviation compensate
+#define Offset -0.44            //deviation compensate
 //#define LED 4
 #define samplingInterval 20
 #define printInterval 800
@@ -185,19 +185,20 @@ float getWaterTempC(){
 }
 
 bool getLightStatus(){
-  int ambLightValue = 0;
+  int ambLightValue = 400;
   return(analogRead(A1) > ambLightValue);
 }
 
 float getPHValue(){
   float pHValue,voltage;
-  
+    for(int i = 0; i < 40; i++){
       pHArray[pHArrayIndex++]=analogRead(SensorPin);
       if(pHArrayIndex==ArrayLenth)pHArrayIndex=0;
       voltage = avergearray(pHArray, ArrayLenth)*5.0/1024;
       pHValue = 3.5*voltage+Offset;
-
-  return(pHValue);
+      delay(20);
+    }
+    return(pHValue);
 }
 
 void displayDataOLED(){
@@ -251,4 +252,3 @@ double avergearray(int* arr, int number){
   }//if
   return avg;
 }
-
