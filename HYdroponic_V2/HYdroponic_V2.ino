@@ -26,10 +26,10 @@ float light = 189;
 #define ECHO_PIN     11  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 350 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 //BUTTONS
-#define back 5
+#define back 6
 #define enter 4
-#define next 6
-#define last 9
+#define next 9
+#define last 5
 bool nextState = HIGH;
 bool lastState = HIGH;
 bool enterState = HIGH;
@@ -37,6 +37,7 @@ bool backState = HIGH;
 bool pressedOnce = HIGH;
 unsigned long buttonOffset = 0;
 int buttonDelay = 300;
+int arrowPosition = 0;
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
@@ -140,6 +141,7 @@ void setup() {
 
   lastScreenChangeMillis = millis();
   lastSendDataMillis = lastScreenChangeMillis;
+  showLCDData();
 }
 
 void loop() {
@@ -147,7 +149,8 @@ void loop() {
   //every 2s, send new values.
 
   if((millis() - lastSendDataMillis) > sendDataInterval){
-
+    lcd.setCursor(12,0);
+    lcd.print("Load");
     wT = getWaterTempC();//Change this variables or make your or make your own ones
     aH = getAirhumid();
     aT = getAirTempC();
@@ -190,6 +193,9 @@ void loop() {
     Serial.println(dataOutput);
 
     lastSendDataMillis = millis();
+    lcd.setCursor(12,0);
+    lcd.print("    ");
+    showLCDData();
   }
   enterState = digitalRead(enter);
   nextState = digitalRead(next);
@@ -197,19 +203,28 @@ void loop() {
   backState = digitalRead(back);
   if (millis() - buttonOffset > buttonDelay){
    if((nextState == LOW) && (!pressedOnce)){
+    arrowPosition++;
+    if (arrowPosition >= 2){
+    arrowPosition = 0;
     screenCount++;
+    }
     if (screenCount > numData/dataPerScreen){
-      
+      screenCount = 0;
     }
     pressedOnce = true;
     buttonOffset = millis();
     showLCDData();
   }
   else if((lastState == LOW) && (!pressedOnce)){
+    arrowPosition--;
+    if(arrowPosition <= -1){
+    arrowPosition = 1;
     screenCount--;
-    if(screenCount<= -1){
-      screenCount = numData/dataPerScreen;
     }
+    if(screenCount== 255){
+      screenCount =numData/dataPerScreen;
+    }
+    Serial.print(screenCount);
     pressedOnce = true;
     buttonOffset = millis();
     showLCDData();
@@ -332,10 +347,11 @@ void showLCDData(){
   lcd.setCursor(0,0);
   lcd.print(screenCount);
   */
-  
+  lcd.setCursor(0,arrowPosition);
+  lcd.print(">");
   for(int i = 0; i < dataPerScreen; i++){
     if((i+ (dataPerScreen * screenCount)) <= numData-1){
-      lcd.setCursor(0,i);
+      lcd.setCursor(2,i);
       lcd.print(dataPrefix[i + (dataPerScreen * screenCount)]);
       lcd.print(": ");
       lcd.print(data[i + (dataPerScreen * screenCount)]);
