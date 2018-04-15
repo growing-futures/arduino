@@ -3,6 +3,11 @@
 
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
+#include <NewPing.h>
+#include <DHT.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
 
 // Set the LCD address to 0x27 for a 16 chars and 2 line display
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -20,7 +25,7 @@ float light = 189;
 // Example NewPing library sketch that does a ping about 20 times per second.
 // ---------------------------------------------------------------------------
 
-#include <NewPing.h>
+
 
 #define TRIGGER_PIN  12  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     11  // Arduino pin tied to echo pin on the ultrasonic sensor.
@@ -31,7 +36,7 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and
 // Example testing sketch for various DHT humidity/temperature sensors
 // Written by ladyada, public domain
 
-#include "DHT.h"
+
 
 #define DHTPIN 8     // what digital pin we're connected to
 
@@ -60,8 +65,7 @@ DHT dht(DHTPIN, DHTTYPE);
   Based on the Dallas Temperature Library example
 *********/
 
-#include <OneWire.h>
-#include <DallasTemperature.h>
+
 
 // Data wire is conntec to the Arduino digital pin 2
 #define ONE_WIRE_BUS 7
@@ -217,7 +221,7 @@ String getLight3Status(){
 }
 String getLight4Status(){
   if(numLights == 1) return "X";
-  return((String)(analogRead(A4) > ambLS));//400 being ambient light
+  return((String)(analogRead(A6) > ambLS));//400 being ambient light
 }
 
 float getPHValue(){
