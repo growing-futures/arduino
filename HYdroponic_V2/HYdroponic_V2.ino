@@ -1,37 +1,40 @@
-#define ambLS 400
-#define numLights 4
-
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <NewPing.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-
-// Set the LCD address to 0x27 for a 16 chars and 2 line display
-int lcdWidth = 16;
-int lcdHeigth = 2;
-LiquidCrystal_I2C lcd(0x27, lcdWidth, lcdHeigth);
-int millisUpdate = millis();
-/*
-float waterTemp = 22.3;//Change this variables or make your or make your own ones
-float airHumidity = 12.3;
-float airTemp = 45.2;
-float ph= 7.00;
-float waterlevel = 10.3;
-float light = 189;
-*/
-
-// ---------------------------------------------------------------------------
-// Example NewPing library sketch that does a ping about 20 times per second.
-// ---------------------------------------------------------------------------
-
-#include <NewPing.h>
-
+#include "DHT.h"
+#define SensorPin A0
+#define DHTTYPE DHT11   // DHT 11
+#define ambLS 400
+#define numLights 4
 #define TRIGGER_PIN  12  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     11  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 350 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+#define DHTPIN 8  // what digital pin we're connected to
+// Data wire is conntec to the Arduino digital pin 2
+#define ONE_WIRE_BUS 7
+#define samplingInterval 20
+#define printInterval 800
+#define ArrayLenth  40
+#define numData 9
+#define dataPerScreen lcdHeigth
 //BUTTONS
 #define back 4
 #define enter 6
 #define next 9
 #define last 5
+int lcdWidth = 16;
+int lcdHeigth = 2;
+LiquidCrystal_I2C lcd(0x27, lcdWidth, lcdHeigth);
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+DHT dht(DHTPIN, DHTTYPE);
+// Setup a oneWire instance to communicate with any OneWire devices
+OneWire oneWire(ONE_WIRE_BUS);
+// Pass our oneWire reference to Dallas Temperature sensor 
+DallasTemperature sensors(&oneWire);
+
+int millisUpdate = millis();
 bool nextState = HIGH;
 bool lastState = HIGH;
 bool enterState = HIGH;
@@ -40,77 +43,13 @@ bool pressedOnce = HIGH;
 unsigned long buttonOffset = 0;
 int buttonDelay = 300;
 int arrowPosition = 0;
-bool calibrateMenu = false;
+bool calibrateMenu = false;        
+float Offset= 0;     //deviation compensate of ph sensor
 
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
-
-// Example testing sketch for various DHT humidity/temperature sensors
-// Written by ladyada, public domain
-
-#include "DHT.h"
-
-#define DHTPIN 8     // what digital pin we're connected to
-
-// Uncomment whatever type you're using!
-#define DHTTYPE DHT11   // DHT 11
-//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
-//#define DHTTYPE DHT21   // DHT 21 (AM2301)
-
-// Connect pin 1 (on the left) of the sensor to +5V
-// NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
-// to 3.3V instead of 5V!
-// Connect pin 2 of the sensor to whatever your DHTPIN is
-// Connect pin 4 (on the right) of the sensor to GROUND
-// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
-
-// Initialize DHT sensor.
-// Note that older versions of this library took an optional third parameter to
-// tweak the timings for faster processors.  This parameter is no longer needed
-// as the current DHT reading algorithm adjusts itself to work on faster procs.
-DHT dht(DHTPIN, DHTTYPE);
-
-
-/*********
-  Rui Santos
-  Complete project details at http://randomnerdtutorials.com  
-  Based on the Dallas Temperature Library example
-*********/
-
-#include <OneWire.h>
-#include <DallasTemperature.h>
-
-// Data wire is conntec to the Arduino digital pin 2
-#define ONE_WIRE_BUS 7
-
-// Setup a oneWire instance to communicate with any OneWire devices
-OneWire oneWire(ONE_WIRE_BUS);
-
-// Pass our oneWire reference to Dallas Temperature sensor 
-DallasTemperature sensors(&oneWire);
-
-
-/*
- # This sample code is used to test the pH meter V1.0.
- # Editor : YouYou
- # Ver    : 1.0
- # Product: analog pH meter
- # SKU    : SEN0161
-*/
-
-#define SensorPin A0            //pH meter Analog output to Arduino Analog Input 0
-float Offset= 0;            //deviation compensate
-//#define LED 4
-#define samplingInterval 20
-#define printInterval 800
-#define ArrayLenth  40    //times of collection
 int pHArray[ArrayLenth];   //Store the average value of the sensor feedback
 int pHArrayIndex=0;  
 
-
-
 //variables for all the data
-#define numData 9
-#define dataPerScreen lcdHeigth
 uint8_t screenCount = 0;
 String dataPrefix[numData] = {"wT", "aH", "aT", "pH", "wL", "LS1", "LS2", "LS3", "LS4"};
 String data[numData];
@@ -123,8 +62,6 @@ String data[numData];
   String l2S;
   String l3S;
   String l4S;
-
-
 unsigned long sendDataInterval = 10000;
 //unsigned long screenChangeInterval = 3000;
 unsigned long lastSendDataMillis;
@@ -139,18 +76,11 @@ void setup() {
   pinMode(back, INPUT_PULLUP);
   dht.begin();
   sensors.begin();
-  
   lcd.begin();
-  
-//  lastScreenChangeMillis = millis();
-//  lastSendDataMillis = lastScreenChangeMillis;
   calibratePhSensor();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  //every 2s, send new values.
-
   if((millis() - lastSendDataMillis) > sendDataInterval){
     gatherData();
   }
@@ -187,7 +117,7 @@ void loop() {
     showLCDData();
   }
   else if((enterState == LOW) && (!pressedOnce)){
-    if(!calibrateMenu && (arrowPosition + dataPerScreen * screenCount == 3 || arrowPosition + dataPerScreen * screenCount == 9)|| calibrateMenu){
+    if(!calibrateMenu && (arrowPosition + dataPerScreen * screenCount == 3 )|| calibrateMenu){
     if(!calibrateMenu){
     calibrateMenu = true;
     }
@@ -217,9 +147,7 @@ void loop() {
   if ((enterState == HIGH) && (nextState == HIGH) && (lastState == HIGH)&& (backState == HIGH)){
     pressedOnce = false;
   }
-  
   }
-
 }
 
 unsigned long getWaterLevelCm(){
@@ -354,15 +282,8 @@ double avergearray(int* arr, int number){
   }//if
   return avg;
 }
-
 void showLCDData(){
-  
   lcd.clear();
-  /*
-  delay(200);
-  lcd.setCursor(0,0);
-  lcd.print(screenCount);
-  */
   if (!calibrateMenu){
   lcd.setCursor(0,arrowPosition);
   lcd.print("=>");
