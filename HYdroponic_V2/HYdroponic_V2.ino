@@ -61,7 +61,7 @@ String data[numData];
   String l2S;
   String l3S;
   String l4S;
-unsigned long sendDataInterval = 10000;
+unsigned long sendDataInterval = 10000;//for 1 hour 3600000
 //unsigned long screenChangeInterval = 3000;
 unsigned long lastSendDataMillis;
 //unsigned long lastScreenChangeMillis;
