@@ -19,11 +19,13 @@
 #define MAX_DISTANCE 350 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
 #define ONE_WIRE_BUS 7 // data wire of the Water Temperature sensor
-#define samplingInterval 20
-#define printInterval 800
-#define ArrayLenth  40
-#define numData 9
-#define dataPerScreen lcdHeight //I don't think this is proper form.
+
+#define samplingInterval 20 //pH sampling interval
+#define printInterval 800 //amount of time to sample pH in milliseconds
+#define ArrayLenth  40 //for the pH sensor readings - will allow to take an average reading
+
+#define numData 9 //total number of metrics to gather
+#define dataPerScreen lcdHeight //how many metrics can fit on each screen (number of lines on LCD)
 
 //BUTTONS connected to digital pins X
 #define back 4
@@ -31,65 +33,93 @@
 #define next 9
 #define last 5
 
-int lcdWidth = 16;
-int lcdHeight = 2;
+//width and height of the LCD
+#define lcdWidth 16;
+#define lcdHeight 2;
+
+//start the LCD library - i2c address, height, and width
 LiquidCrystal_I2C lcd(0x27, lcdWidth, lcdHeight);
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+
+// NewPing setup of pins and maximum distance.
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); 
+
+//start the DHT sensor with the pin and type
 DHT dht(DHTPIN, DHTTYPE);
+
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature sensor 
 DallasTemperature sensors(&oneWire);
-int millisUpdate = millis();
+
+int millisUpdate = millis(); //I dont think this is used FIX
+
+//states for all the buttons - inverted logic because of pullup resistors on the buttons for the menu
 bool nextState = HIGH;
 bool lastState = HIGH;
 bool enterState = HIGH;
 bool backState = HIGH;
 bool pressedOnce = HIGH;
-unsigned long buttonOffset = 0;
-int buttonDelay = 300;
-int arrowPosition = 0;
-bool calibrateMenu = false;        
-float Offset= 0;     //deviation compensate of ph sensor
 
-int pHArray[ArrayLenth];   //Store the average value of the sensor feedback
-int pHArrayIndex=0;  
+unsigned long buttonOffset = 0; //the timestamp of the last button press
+#define buttonDelay 300 //minimum time (in milliseconds) between button presses
+int arrowPosition = 0; //store the arrow position on the LCD
+bool calibrateMenu = false; //
+float Offset= 0;     //deviation compensate of ph sensor - should be stored in EEPROM
 
-//variables for all the data
-uint8_t screenCount = 0;
+int pHArray[ArrayLenth]; //Store the average value of the sensor feedback
+int pHArrayIndex=0;
+
+uint8_t screenCount = 0;//what sensor display screen we are currently looking at
+
+//variables for all the data, with their prefixes to display on the LCD
 String dataPrefix[numData] = {"wT", "aH", "aT", "pH", "wL", "LS1", "LS2", "LS3", "LS4"};
 String data[numData];
-  float wT;
-  float aH;
-  float aT;
-  float pH;
-  unsigned long wL;
-  String l1S;
-  String l2S;
-  String l3S;
-  String l4S;
-unsigned long sendDataInterval = 10000;//for 1 hour 3600000
-//unsigned long screenChangeInterval = 3000;
-unsigned long lastSendDataMillis;
+float wT;
+float aH;
+float aT;
+float pH;
+unsigned long wL;
+String l1S;
+String l2S;
+String l3S;
+String l4S;
+
+//#define sendDataInterval 3600000 //for 1 h
+#define sendDataInterval 10000;//for 10 seconds
+unsigned long lastSendDataMillis; //last time data was sent
+
+//no longer using this, controlled by buttons. Maybe if no button pushed in X time, then auto-scroll
+//unsigned long screenChangeInterval = 3000; 
 //unsigned long lastScreenChangeMillis;
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+  //setup for button pins
   pinMode(enter,INPUT_PULLUP);
   pinMode(next, INPUT_PULLUP);
   pinMode(last, INPUT_PULLUP);
   pinMode(back, INPUT_PULLUP);
+  
+  //setup for sensors
   dht.begin();
   sensors.begin();
+  
+  //setup for LCD
   lcd.begin();
+  
+  //this should not be here! should load offset from EEPROM - FIX
   calibratePhSensor();
 }
 
 void loop() {
-  if((millis() - lastSendDataMillis) > sendDataInterval){
+  
+  //if the set amount of time has passed since we last gathered, gather and send new data
+  if((millis() - lastSendDataMillis) > sendDataInterval){ 
     gatherData();
   }
+  
+  //read all the buttons, if any are pressed, then take appropriate action.
   enterState = digitalRead(enter);
   nextState = digitalRead(next);
   lastState = digitalRead(last);
@@ -127,10 +157,10 @@ void loop() {
     if(!calibrateMenu){
     calibrateMenu = true;
     }
-    else if(calibrateMenu && arrowPosition == 0){
+    else if(calibrateMenu && (arrowPosition == 0)){ //arrow was on NO
       calibrateMenu = false;//DON'T DO ANYTHING
     }
-    else if(calibrateMenu && arrowPosition >= 1){
+    else if(calibrateMenu && (arrowPosition >= 1)){ //arrow was on YES
       if(arrowPosition + dataPerScreen * screenCount == 3){
         calibratePhSensor();//CALIBRATE PH SENSOR
       }
@@ -174,19 +204,19 @@ float getWaterTempC(){
 }
 
 String getLight1Status(){
-  return((String)(analogRead(A1) > ambLS));//400 being ambient light
+  return((String)(analogRead(A1) > ambLS));
 }
 String getLight2Status(){
   if(numLights == 1) return "X";
-  return((String)(analogRead(A2) > ambLS));//400 being ambient light
+  return((String)(analogRead(A2) > ambLS));
 }
 String getLight3Status(){
   if(numLights == 1) return "X";
-  return((String)(analogRead(A3) > ambLS));//400 being ambient light
+  return((String)(analogRead(A3) > ambLS));
 }
 String getLight4Status(){
   if(numLights == 1) return "X";
-  return((String)(analogRead(A6) > ambLS));//400 being ambient light
+  return((String)(analogRead(A6) > ambLS));
 }
 
 float getPHValue(){
@@ -200,6 +230,18 @@ float getPHValue(){
     }
     return(pHValue);
 }
+
+//**************************IF YOU WANT TO ADD NEW SENSORS, create a getXXXX function here, like outlined below.
+//also, add this function to gatherData below, and put the new data in the arrays at the top, and increment numData
+//This will also print "LOAD" on the LCD as it is gathering data.
+/*
+float getSensorData(){
+  //get the data you need - read a pin, call a library, or whatever
+  return(data)
+}
+*/
+
+
 void gatherData(){
   lcd.setCursor(12,0);
     lcd.print("Load");
@@ -249,6 +291,8 @@ void gatherData(){
     lcd.print("    ");
     showLCDData();
 }
+
+//This is for the pH sensor, don't touch it.
 double avergearray(int* arr, int number){
   int i;
   int max,min;
@@ -288,6 +332,8 @@ double avergearray(int* arr, int number){
   }//if
   return avg;
 }
+
+//This shows all the data on the LCD, using the screenCount global variable to decide which set to show.
 void showLCDData(){
   lcd.clear();
   if (!calibrateMenu){
@@ -313,10 +359,12 @@ void showLCDData(){
     lcd.print("Yes");
   }
 }
+
+//Calibrates the Offset on the pH sensor.
 void calibratePhSensor(){
         Offset = 0;
         gatherData();
         Offset = 7.00 - data[3].toFloat();
-        gatherData();
+        gatherData(); //Do not need to regather at the end necessarily.
 }
 
