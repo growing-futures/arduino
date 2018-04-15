@@ -1,32 +1,39 @@
-#include <OneWire.h>
-#include <DallasTemperature.h>
-#include <NewPing.h>
-#include <Wire.h> 
-#include <LiquidCrystal_I2C.h>
-#include "DHT.h"
-#define SensorPin A0
-#define DHTTYPE DHT11   // DHT 11
-#define ambLS 400
-#define numLights 4
+//Required Libraries
+#include <OneWire.h> //for water temperature sensor
+#include <DallasTemperature.h> //for water temperature sensor
+#include <NewPing.h>//for ultrasonic water level sensor
+#include <Wire.h> //for the LCD
+#include <LiquidCrystal_I2C.h> //for the LCD
+#include "DHT.h" //for air temperature and humidity sensor
+
+#define DHTTYPE DHT11   // DHT 11 Air Temperature and humidity sensor - DHT22 are more accurate
+#define DHTPIN 8  // what digital pin the DHT sensor is connected to.
+
+#define SensorPin A0 //pH sensor signal pin
+
+#define ambLS 400 // light sensors should return under this value when off, over when on
+#define numLights 4 //number of lights. will send X otherwise
+
 #define TRIGGER_PIN  12  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     11  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 350 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
-#define DHTPIN 8  // what digital pin we're connected to
-// Data wire is conntec to the Arduino digital pin 2
-#define ONE_WIRE_BUS 7
+
+#define ONE_WIRE_BUS 7 // data wire of the Water Temperature sensor
 #define samplingInterval 20
 #define printInterval 800
 #define ArrayLenth  40
 #define numData 9
-#define dataPerScreen lcdHeigth
-//BUTTONS
+#define dataPerScreen lcdHeight //I don't think this is proper form.
+
+//BUTTONS connected to digital pins X
 #define back 4
 #define enter 6
 #define next 9
 #define last 5
+
 int lcdWidth = 16;
-int lcdHeigth = 2;
-LiquidCrystal_I2C lcd(0x27, lcdWidth, lcdHeigth);
+int lcdHeight = 2;
+LiquidCrystal_I2C lcd(0x27, lcdWidth, lcdHeight);
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 DHT dht(DHTPIN, DHTTYPE);
 // Setup a oneWire instance to communicate with any OneWire devices
