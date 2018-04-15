@@ -1,0 +1,53 @@
+README
+
+Library Dependencies:
+
+To install the libraries, go to the libraries manager in the Arduino IDE
+searh DHT11 - install the first one by Adafruit
+search OneWire - install the one whose title is just "OneWire"
+search DallasTemperature - install the one whose title is just "DallasTemperature"
+search NewPing - install the one whose title is just "NewPing"
+LiquidCrystal - fmalpartida New LiquidCrystal  - from bitbucket - this library is also in the Github folder.
+Download the Adafruit_Sensor library from here: https://github.com/adafruit/Adafruit_Sensor
+	Unzip it and put it in the libraries folder inside the Arduino folder in Documents.
+
+Connections:
+
+DS18B20 Waterproof Temperature Sensor
+Red - 5V
+Yellow - D7 (configurable in program)
+Black - GND
+*10K Resistor between 5V and D7
+
+LCD - 16X2 or 20X4 LCD
+GND - GND
+VCC - VCC
+SDA - A4
+SCL - A5
+
+HC-SR04 Ultrasonic Distance Sensor for Water Level
+GND - GND
+ECHO - D11 (configurable in program)
+TRIG - D12 (configurable in program)
+VCC - 5V
+
+pH Sensor (probe plugged in to breakout board, breakout board plugged into Arduino)
+Blue - A0
+Black - GND
+Red - 5V
+
+DHT11 Air Temperature and Humidity Sensors (holes facing you)
+Leftmost pin - 5V
+2nd Leftmost pin - D8 (configurable)
+2nd Rightmost pin - Not Connected
+Rightmost Pin - GND
+*roughly 5K resistor connecting the 2 leftmost pins together.
+
+Light Sensors (Light Dependant Resistors)
+For each sensor, connected to A0, A1, A2, A6
+10K resistor connected between GND and pin X
+Photoresistor connected between 5V and pin X
+
+Buttons for Menu
+connected to pins D2, D3, D4, D5
+One side connected to GND, other side connected to pin X
