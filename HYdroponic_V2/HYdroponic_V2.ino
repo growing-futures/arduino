@@ -122,10 +122,10 @@ String data[numData];
   String l4S;
 
 
-unsigned long sendDataInterval = 2000;
-unsigned long screenChangeInterval = 3000;
+unsigned long sendDataInterval = 10000;
+//unsigned long screenChangeInterval = 3000;
 unsigned long lastSendDataMillis;
-unsigned long lastScreenChangeMillis;
+//unsigned long lastScreenChangeMillis;
 
 void setup() {
   // put your setup code here, to run once:
@@ -136,12 +136,12 @@ void setup() {
   pinMode(back, INPUT_PULLUP);
   dht.begin();
   sensors.begin();
-
+  
   lcd.begin();
-
-  lastScreenChangeMillis = millis();
-  lastSendDataMillis = lastScreenChangeMillis;
-  showLCDData();
+  
+//  lastScreenChangeMillis = millis();
+//  lastSendDataMillis = lastScreenChangeMillis;
+  gatherData();
 }
 
 void loop() {
@@ -149,53 +149,7 @@ void loop() {
   //every 2s, send new values.
 
   if((millis() - lastSendDataMillis) > sendDataInterval){
-    lcd.setCursor(12,0);
-    lcd.print("Load");
-    wT = getWaterTempC();//Change this variables or make your or make your own ones
-    aH = getAirhumid();
-    aT = getAirTempC();
-    pH= getPHValue();
-    wL = getWaterLevelCm();
-    l1S = getLight1Status();
-    l2S = getLight2Status();
-    l3S = getLight3Status();
-    l4S = getLight4Status();
-
-    data[0] = (String)wT;
-    data[1] = (String)aH;
-    data[2] = (String)aT;
-    data[3] = (String)pH;
-    data[4] = (String)wL;
-    data[5] = (String)l1S;
-    data[6] = (String)l2S;
-    data[7] = (String)l3S;
-    data[8] = (String)l4S;
-
-    String dataOutput = "";
-    dataOutput += wL;
-    dataOutput += ",";
-    dataOutput += aH;
-    dataOutput += ",";
-    dataOutput += aT;
-    dataOutput += ",";
-    dataOutput += wT;
-    dataOutput += ",";
-    dataOutput += pH;
-    dataOutput += ",";
-    dataOutput += l1S;
-    dataOutput += ",";
-    dataOutput += l2S;
-    dataOutput += ",";
-    dataOutput += l3S;
-    dataOutput += ",";
-    dataOutput += l4S;
-
-    Serial.println(dataOutput);
-
-    lastSendDataMillis = millis();
-    lcd.setCursor(12,0);
-    lcd.print("    ");
-    showLCDData();
+    gatherData();
   }
   enterState = digitalRead(enter);
   nextState = digitalRead(next);
@@ -298,7 +252,55 @@ float getPHValue(){
     }
     return(pHValue);
 }
+void gatherData(){
+  lcd.setCursor(12,0);
+    lcd.print("Load");
+    wT = getWaterTempC();//Change this variables or make your or make your own ones
+    aH = getAirhumid();
+    aT = getAirTempC();
+    pH= getPHValue();
+    wL = getWaterLevelCm();
+    l1S = getLight1Status();
+    l2S = getLight2Status();
+    l3S = getLight3Status();
+    l4S = getLight4Status();
 
+    data[0] = (String)wT;
+    data[1] = (String)aH;
+    data[2] = (String)aT;
+    data[3] = (String)pH;
+    data[4] = (String)wL;
+    data[5] = (String)l1S;
+    data[6] = (String)l2S;
+    data[7] = (String)l3S;
+    data[8] = (String)l4S;
+
+    String dataOutput = "";
+    dataOutput += wL;
+    dataOutput += ",";
+    dataOutput += aH;
+    dataOutput += ",";
+    dataOutput += aT;
+    dataOutput += ",";
+    dataOutput += wT;
+    dataOutput += ",";
+    dataOutput += pH;
+    dataOutput += ",";
+    dataOutput += l1S;
+    dataOutput += ",";
+    dataOutput += l2S;
+    dataOutput += ",";
+    dataOutput += l3S;
+    dataOutput += ",";
+    dataOutput += l4S;
+
+    Serial.println(dataOutput);
+
+    lastSendDataMillis = millis();
+    lcd.setCursor(12,0);
+    lcd.print("    ");
+    showLCDData();
+}
 double avergearray(int* arr, int number){
   int i;
   int max,min;
