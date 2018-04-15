@@ -96,7 +96,7 @@ DallasTemperature sensors(&oneWire);
 */
 
 #define SensorPin A0            //pH meter Analog output to Arduino Analog Input 0
-#define Offset -0.44            //deviation compensate
+float Offset= -0.44;            //deviation compensate
 //#define LED 4
 #define samplingInterval 20
 #define printInterval 800
@@ -185,6 +185,7 @@ void loop() {
     showLCDData();
   }
   else if((enterState == LOW) && (!pressedOnce)){
+    if(!calibrateMenu && arrowPosition + dataPerScreen * screenCount == 3|| calibrateMenu){
     if(!calibrateMenu){
     calibrateMenu = true;
     }
@@ -192,12 +193,17 @@ void loop() {
       calibrateMenu = false;//GO BACK
     }
     else if(calibrateMenu && arrowPosition == 1){
+      gatherData();
+      if(arrowPosition + dataPerScreen * screenCount == 3){
+        //Offset = 7.00 - data[3].toFloat(); FIX THIS
+      }
       calibrateMenu = false;//DO SOMETHING
     }
     arrowPosition = 0;
+    showLCDData();
+    }
     pressedOnce = true;
     buttonOffset = millis();
-    showLCDData();
   }
   else if((backState == LOW) && (!pressedOnce)){
     gatherData();
@@ -209,15 +215,6 @@ void loop() {
   }
   
   }
-  /*if((millis() - lastScreenChangeMillis) > screenChangeInterval){
-    //change the screen
-    screenCount ++;
-    if(((screenCount) * dataPerScreen) > numData){
-      screenCount = 0; //reset the screen
-    }
-    showLCDData();
-    lastScreenChangeMillis = millis();
-  }*/
 
 }
 
@@ -260,7 +257,7 @@ float getPHValue(){
       pHArray[pHArrayIndex++]=analogRead(SensorPin);
       if(pHArrayIndex==ArrayLenth)pHArrayIndex=0;
       voltage = avergearray(pHArray, ArrayLenth)*5.0/1024;
-      pHValue = 3.5*voltage+Offset;
+      pHValue = (3.5*voltage)+Offset;
       delay(20);
     }
     return(pHValue);
