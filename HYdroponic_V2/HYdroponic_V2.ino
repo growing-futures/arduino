@@ -365,7 +365,7 @@ void showLCDData(){
   */
   if (!calibrateMenu){
   lcd.setCursor(0,arrowPosition);
-  lcd.print(">");
+  lcd.print("=>");
   for(int i = 0; i < dataPerScreen; i++){
     if((i+ (dataPerScreen * screenCount)) <= numData-1){
       lcd.setCursor(2,i);
@@ -379,7 +379,7 @@ void showLCDData(){
     lcd.setCursor(0,0);
     lcd.print("Calibrate?");
     lcd.setCursor(6 * arrowPosition,1);
-    lcd.print(">");
+    lcd.print("=>");
     lcd.setCursor(2, 1);
     lcd.print("No");
     lcd.setCursor(8,1);                                                               
