@@ -33,7 +33,6 @@ DHT dht(DHTPIN, DHTTYPE);
 OneWire oneWire(ONE_WIRE_BUS);
 // Pass our oneWire reference to Dallas Temperature sensor 
 DallasTemperature sensors(&oneWire);
-
 int millisUpdate = millis();
 bool nextState = HIGH;
 bool lastState = HIGH;
@@ -180,7 +179,7 @@ String getLight3Status(){
 }
 String getLight4Status(){
   if(numLights == 1) return "X";
-  return((String)(analogRead(A4) > ambLS));//400 being ambient light
+  return((String)(analogRead(A6) > ambLS));//400 being ambient light
 }
 
 float getPHValue(){
