@@ -96,7 +96,7 @@ DallasTemperature sensors(&oneWire);
 */
 
 #define SensorPin A0            //pH meter Analog output to Arduino Analog Input 0
-float Offset= -0.44;            //deviation compensate
+float Offset= 0;            //deviation compensate
 //#define LED 4
 #define samplingInterval 20
 #define printInterval 800
@@ -193,13 +193,15 @@ void loop() {
       calibrateMenu = false;//GO BACK
     }
     else if(calibrateMenu && arrowPosition == 1){
-      gatherData();
+      
       if(arrowPosition + dataPerScreen * screenCount == 3){
-        Offset = 7.00 - data[3].toFloat() - Offset
+        Offset = 0;
+        Offset = 7.00 - data[3].toFloat();
       }
       calibrateMenu = false;//DO SOMETHING
     }
     arrowPosition = 0;
+    gatherData();
     showLCDData();
     }
     pressedOnce = true;
