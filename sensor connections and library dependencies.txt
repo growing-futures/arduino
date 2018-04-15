@@ -13,6 +13,11 @@ Download the Adafruit_Sensor library from here: https://github.com/adafruit/Adaf
 
 Connections:
 
+Flow Rate Sensor
+Red - 5V
+Black - GND
+Yellow - 10K pullup to 5V, and to D2
+
 DS18B20 Waterproof Temperature Sensor
 Red - 5V
 Yellow - D7 (configurable in program)
