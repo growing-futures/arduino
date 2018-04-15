@@ -195,7 +195,7 @@ void loop() {
     else if(calibrateMenu && arrowPosition == 1){
       gatherData();
       if(arrowPosition + dataPerScreen * screenCount == 3){
-        //Offset = 7.00 - data[3].toFloat(); FIX THIS
+        Offset = 7.00 - data[3].toFloat() - Offset
       }
       calibrateMenu = false;//DO SOMETHING
     }
