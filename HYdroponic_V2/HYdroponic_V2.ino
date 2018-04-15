@@ -5,7 +5,9 @@
 #include <LiquidCrystal_I2C.h>
 
 // Set the LCD address to 0x27 for a 16 chars and 2 line display
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+int lcdWidth = 16;
+int lcdHeigth = 2;
+LiquidCrystal_I2C lcd(0x27, lcdWidth, lcdHeigth);
 int millisUpdate = millis();
 /*
 float waterTemp = 22.3;//Change this variables or make your or make your own ones
@@ -108,7 +110,7 @@ int pHArrayIndex=0;
 
 //variables for all the data
 #define numData 9
-#define dataPerScreen 2
+#define dataPerScreen lcdHeigth
 uint8_t screenCount = 0;
 String dataPrefix[numData] = {"wT", "aH", "aT", "pH", "wL", "LS1", "LS2", "LS3", "LS4"};
 String data[numData];
@@ -159,7 +161,7 @@ void loop() {
   if (millis() - buttonOffset > buttonDelay){
    if((nextState == LOW) && (!pressedOnce)){
     arrowPosition++;
-    if (arrowPosition >= 2){
+    if (arrowPosition >= dataPerScreen){
     arrowPosition = 0;
     screenCount++;
     }
@@ -192,10 +194,10 @@ void loop() {
     else if(calibrateMenu && arrowPosition == 0){
       calibrateMenu = false;//GO BACK
     }
-    else if(calibrateMenu && arrowPosition == 1){
-      
+    else if(calibrateMenu && arrowPosition >= 1){
       if(arrowPosition + dataPerScreen * screenCount == 3){
         Offset = 0;
+        gatherData();
         Offset = 7.00 - data[3].toFloat();
       }
       calibrateMenu = false;//DO SOMETHING
