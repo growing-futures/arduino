@@ -26,8 +26,8 @@ float light = 189;
 #define ECHO_PIN     11  // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define MAX_DISTANCE 350 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 //BUTTONS
-#define back 6
-#define enter 4
+#define back 4
+#define enter 6
 #define next 9
 #define last 5
 bool nextState = HIGH;
@@ -38,6 +38,7 @@ bool pressedOnce = HIGH;
 unsigned long buttonOffset = 0;
 int buttonDelay = 300;
 int arrowPosition = 0;
+bool calibrateMenu = false;
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
@@ -184,14 +185,26 @@ void loop() {
     showLCDData();
   }
   else if((enterState == LOW) && (!pressedOnce)){
+    if(!calibrateMenu){
+    calibrateMenu = true;
+    }
+    else if(calibrateMenu && arrowPosition == 0){
+      calibrateMenu = false;//GO BACK
+    }
+    else if(calibrateMenu && arrowPosition == 1){
+      calibrateMenu = false;//DO SOMETHING
+    }
+    arrowPosition = 0;
     pressedOnce = true;
     buttonOffset = millis();
+    showLCDData();
   }
   else if((backState == LOW) && (!pressedOnce)){
+    gatherData();
     pressedOnce = true;
     buttonOffset = millis();
   }
-  if ((enterState == HIGH) && (nextState == HIGH) && (lastState == HIGH)){
+  if ((enterState == HIGH) && (nextState == HIGH) && (lastState == HIGH)&& (backState == HIGH)){
     pressedOnce = false;
   }
   
@@ -349,6 +362,7 @@ void showLCDData(){
   lcd.setCursor(0,0);
   lcd.print(screenCount);
   */
+  if (!calibrateMenu){
   lcd.setCursor(0,arrowPosition);
   lcd.print(">");
   for(int i = 0; i < dataPerScreen; i++){
@@ -359,7 +373,15 @@ void showLCDData(){
       lcd.print(data[i + (dataPerScreen * screenCount)]);
     }
   }
-  
-  //lcd.setCursor(14,0);
-  //lcd.print(screenCount);
+  }
+  else{
+    lcd.setCursor(0,0);
+    lcd.print("Calibrate?");
+    lcd.setCursor(6 * arrowPosition,1);
+    lcd.print(">");
+    lcd.setCursor(2, 1);
+    lcd.print("No");
+    lcd.setCursor(8,1);                                                               
+    lcd.print("Yes");
+  }
 }
