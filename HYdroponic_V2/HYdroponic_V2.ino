@@ -144,7 +144,7 @@ void setup() {
   
 //  lastScreenChangeMillis = millis();
 //  lastSendDataMillis = lastScreenChangeMillis;
-  gatherData();
+  calibratePhSensor();
 }
 
 void loop() {
@@ -187,23 +187,23 @@ void loop() {
     showLCDData();
   }
   else if((enterState == LOW) && (!pressedOnce)){
-    if(!calibrateMenu && arrowPosition + dataPerScreen * screenCount == 3|| calibrateMenu){
+    if(!calibrateMenu && (arrowPosition + dataPerScreen * screenCount == 3 || arrowPosition + dataPerScreen * screenCount == 9)|| calibrateMenu){
     if(!calibrateMenu){
     calibrateMenu = true;
     }
     else if(calibrateMenu && arrowPosition == 0){
-      calibrateMenu = false;//GO BACK
+      calibrateMenu = false;//DON'T DO ANYTHING
     }
     else if(calibrateMenu && arrowPosition >= 1){
       if(arrowPosition + dataPerScreen * screenCount == 3){
-        Offset = 0;
-        gatherData();
-        Offset = 7.00 - data[3].toFloat();
+        calibratePhSensor();//CALIBRATE PH SENSOR
       }
-      calibrateMenu = false;//DO SOMETHING
+      if(arrowPosition + dataPerScreen * screenCount == 9){
+        //CALIBRATE FLOW SENSOR
+      }
+      calibrateMenu = false;
     }
     arrowPosition = 0;
-    gatherData();
     showLCDData();
     }
     pressedOnce = true;
@@ -386,3 +386,10 @@ void showLCDData(){
     lcd.print("Yes");
   }
 }
+void calibratePhSensor(){
+        Offset = 0;
+        gatherData();
+        Offset = 7.00 - data[3].toFloat();
+        gatherData();
+}
+
