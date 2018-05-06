@@ -34,8 +34,8 @@
 #define last 5
 
 //width and height of the LCD
-#define lcdWidth 16;
-#define lcdHeight 2;
+#define lcdWidth 16
+#define lcdHeight 2
 
 //start the LCD library - i2c address, height, and width
 LiquidCrystal_I2C lcd(0x27, lcdWidth, lcdHeight);
@@ -85,7 +85,7 @@ String l3S;
 String l4S;
 
 //#define sendDataInterval 3600000 //for 1 h
-#define sendDataInterval 10000;//for 10 seconds
+#define sendDataInterval 10000//for 10 seconds
 unsigned long lastSendDataMillis; //last time data was sent
 
 //no longer using this, controlled by buttons. Maybe if no button pushed in X time, then auto-scroll
@@ -339,7 +339,7 @@ void showLCDData(){
   if (!calibrateMenu){
   lcd.setCursor(0,arrowPosition);
   lcd.print("=>");
-  for(int i = 0; i < dataPerScreen; i++){
+  for(int i = 0; i < dataPerScreen; i ++){
     if((i+ (dataPerScreen * screenCount)) <= numData-1){
       lcd.setCursor(2,i);
       lcd.print(dataPrefix[i + (dataPerScreen * screenCount)]);
@@ -367,4 +367,3 @@ void calibratePhSensor(){
         Offset = 7.00 - data[3].toFloat();
         gatherData(); //Do not need to regather at the end necessarily.
 }
-
